@@ -83,8 +83,7 @@ Output:
             "model": "HS200(US)",
             "on": true,
             "type": "DeviceType.Plug"
-        },
-        ...
+        }
     ]
 }
 ```
