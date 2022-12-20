@@ -5,6 +5,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import asyncio
+from kasa import Discover, DeviceType
+
 DOCUMENTATION = r'''
 ---
 module: smart_device
@@ -18,17 +21,26 @@ version_added: "1.0.0"
 description: Use this module to automate Kasa smart devices in your home or business.
 
 options:
-    name:
-        description: This is the message to send to the test module.
+    target:
+        description: The target ip address for the smart device
         required: true
         type: str
-    new:
-        description:
-            - Control to demo if the result of this module is changed or not.
-            - Parameter description can be a list as well.
+    state:
+        description: The desired state of the smart device
         required: false
-        type: bool
-
+        type: str
+        choices:
+            - on
+            - off
+            - updated
+    alias:
+        description: The smart device alias (as shown in Kasa app).
+        required: false
+        type: str
+    mac:
+        description: The smart device mac address.
+        required: false
+        type: str
 extends_documentation_fragment:
     - zleblanc.kasa.smart_device
 
@@ -37,97 +49,85 @@ author:
 '''
 
 EXAMPLES = r'''
-# Pass in a message
-- name: Test with a message
-  my_namespace.my_collection.my_test:
-    name: hello world
+- name: Get smart device info
+  zleblanc.kasa.smart_device:
+    target: 192.168.0.100
 
-# pass in a message and have changed true
-- name: Test with a message and changed output
-  my_namespace.my_collection.my_test:
-    name: hello world
-    new: true
+- name: Set smart device alias
+  zleblanc.kasa.smart_device:
+    target: 192.168.0.100
+    alias: "Backyard Lights"
 
-# fail the module
-- name: Test failure of the module
-  my_namespace.my_collection.my_test:
-    name: fail me
+- name: Turn smart device on
+  zleblanc.kasa.smart_device:
+    target: 192.168.0.100
+    state: on
 '''
 
 RETURN = r'''
-# These are examples of possible return values, and in general should use other names for return values.
-original_message:
-    description: The original name param that was passed in.
-    type: str
+smart_device:
+    description: The target smart device info
+    type: list
     returned: always
-    sample: 'hello world'
-message:
-    description: The output message that the test module generates.
-    type: str
-    returned: always
-    sample: 'goodbye'
 '''
 
 from ansible.module_utils.basic import AnsibleModule
+from ansible_collections.zleblanc.kasa.plugins.module_utils.common import get_device_info
 
-
-def run_module():
+async def run_module():
     # define available arguments/parameters a user can pass to the module
     module_args = dict(
-        name=dict(type='str', required=True),
-        new=dict(type='bool', required=False, default=False)
+        target=dict(type='str', required=True),
+        state=dict(type='str', required=False, default=None),
+        alias=dict(type='str', required=False, default=None),
+        mac=dict(type='str', required=False, default=None)
     )
 
-    # seed the result dict in the object
-    # we primarily care about changed and state
-    # changed is if this module effectively modified the target
-    # state will include any data that you want your module to pass back
-    # for consumption, for example, in a subsequent task
     result = dict(
         changed=False,
-        original_message='',
-        message=''
     )
 
-    # the AnsibleModule object will be our abstraction working with Ansible
-    # this includes instantiation, a couple of common attr would be the
-    # args/params passed to the execution, as well as if the module
-    # supports check mode
     module = AnsibleModule(
         argument_spec=module_args,
         supports_check_mode=True
     )
 
-    # if the user is working with this module in only check mode we do not
-    # want to make any changes to the environment, just return the current
-    # state with no modifications
     if module.check_mode:
         module.exit_json(**result)
 
-    # manipulate or modify the state as needed (this is going to be the
-    # part where your module will do what it needs to do)
-    result['original_message'] = module.params['name']
-    result['message'] = 'goodbye'
+    smart_device = await Discover.discover_single(module.params['target'])
+    await smart_device.update()
 
-    # use whatever logic you need to determine whether or not this module
-    # made any modifications to your target
-    if module.params['new']:
-        result['changed'] = True
+    if smart_device.device_type == DeviceType.Unknown:
+        module.fail_json('Smart device not found at target %s' % module.params['target'], **result)
 
-    # during the execution of the module, if there is an exception or a
-    # conditional state that effectively causes a failure, run
-    # AnsibleModule.fail_json() to pass in the message and the result
-    if module.params['name'] == 'fail me':
-        module.fail_json(msg='You requested this to fail', **result)
+    original_state = get_device_info(smart_device)
 
-    # in the event of a successful module execution, you will want to
-    # simple AnsibleModule.exit_json(), passing the key/value results
+    if module.params['alias']:
+        smart_device.set_alias(module.params['alias'])
+
+    if module.params['mac']:
+        smart_device.set_mac(module.params['mac'])
+
+    desired_state = module.params['state']
+    if module.params['state']:
+        if desired_state == 'on':
+            await smart_device.turn_on()
+        elif desired_state == 'off':
+            await smart_device.turn_off()
+        else:
+            # already updated
+            pass
+    
+    await smart_device.update()
+    result['smart_device'] = get_device_info(smart_device)
+    result['changed'] = original_state != result['smart_device']
     module.exit_json(**result)
 
 
-def main():
-    run_module()
+async def main():
+    await run_module()
 
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())
