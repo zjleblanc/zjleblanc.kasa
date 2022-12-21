@@ -9,6 +9,7 @@ __pycache__/
 *.so
 
 # Distribution / packaging
+zjleblanc-kasa-*.tar.gz
 .Python
 build/
 develop-eggs/
