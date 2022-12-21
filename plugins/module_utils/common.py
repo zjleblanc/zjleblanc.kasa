@@ -1,4 +1,4 @@
-from kasa import SmartDevice
+from kasa import SmartDevice, SmartDimmer
 
 def get_device_info(device: SmartDevice):
     return {
@@ -9,3 +9,10 @@ def get_device_info(device: SmartDevice):
         "hw_info": device.hw_info,
         "on": device.is_on
     }
+
+def get_dimmer_info(dimmer: SmartDimmer):
+    dimmer_info = get_device_info(dimmer)
+    dimmer_info.update({
+        "brightness": dimmer.brightness
+    })
+    return dimmer_info
