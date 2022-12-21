@@ -14,19 +14,7 @@ module: smart_device
 
 short_description: Discover kasa smart devices
 
-# If this is part of a collection, you need to use semantic versioning,
-# i.e. the version is of the form "2.5.0" and not "2.4".
 version_added: "1.0.0"
-
-description: Use this module to discover Kasa smart devices in your home or business.
-
-target – The target address where to send the broadcast discovery queries if multi-homing (e.g. 192.168.xxx.255).
-
-timeout – How long to wait for responses, defaults to 5
-
-discovery_packets – Number of discovery packets to broadcast
-
-interface – Bind to specific interface
 
 options:
     target:
@@ -50,16 +38,13 @@ options:
         type: str
         default: None
 
-extends_documentation_fragment:
-    - zleblanc.kasa.discover
-
 author:
     - Zach LeBlanc (@zjleblanc)
 '''
 
 EXAMPLES = r'''
 - name: Discover Kasa smart devices on network
-  zleblanc.kasa.discover:
+  zjleblanc.kasa.discover:
 
 - name: Discover Kasa smart device with particular IP
   my_namespace.my_collection.my_test:
@@ -74,7 +59,7 @@ smart_devices:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.zleblanc.kasa.plugins.module_utils.common import get_device_info
+from ansible_collections.zjleblanc.kasa.plugins.module_utils.common import get_device_info
 
 async def run_module():
     # define available arguments/parameters a user can pass to the module

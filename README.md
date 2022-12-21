@@ -1,4 +1,4 @@
-# Ansible Collection - zleblanc.kasa
+# Ansible Collection - zjleblanc.kasa
 
 The kasa collection contains modules for automating [Kasa Smart](https://www.kasasmart.com/) devices.
 
@@ -13,7 +13,7 @@ The discover module can be used to find Kasa smart devices on your network and r
 Example:
 ```yaml
     - name: Discover smart devices
-      zleblanc.kasa.discover:
+      zjleblanc.kasa.discover:
 ```
 
 Output:
@@ -49,16 +49,16 @@ The smart_device module can be used to find Kasa smart devices on your network a
 Examples:
 ```yaml
     - name: Get info about known smart device
-      zleblanc.kasa.smart_device:
+      zjleblanc.kasa.smart_device:
         target: 192.168.0.100
 
     - name: Set alias for known smart device
-      zleblanc.kasa.smart_device:
+      zjleblanc.kasa.smart_device:
         target: 192.168.0.100
         alias: Entryway Lights
 
     - name: Turn on known smart device
-      zleblanc.kasa.smart_device:
+      zjleblanc.kasa.smart_device:
         target: 192.168.0.100
         state: on
 ```

@@ -1,13 +1,12 @@
-namespace: zleblanc
+namespace: zjleblanc
 name: kasa
-version: 1.0.0
+version: 1.0.4
 
 authors:
 - Zach LeBlanc <zjleblanc3@gmail.com>
 description: Kasa Smart Device Home Automation
 readme: README.md
 
-license: [GPL-2.0-or-later]
 license_file: LICENSE
 
 tags:
@@ -15,11 +14,13 @@ tags:
   - smart_device
   - home_automation
 
-repository: https://github.com/zjleblanc/kasa-smart
-documentation: https://github.com/zjleblanc/kasa-smart/blob/master/README.md
-homepage: https://github.com/zjleblanc/kasa-smart
-issues: https://github.com/zjleblanc/kasa-smart/issues
+repository: https://github.com/zjleblanc/zjleblanc.kasa
+documentation: https://github.com/zjleblanc/zjleblanc.kasa/blob/master/README.md
+homepage: https://github.com/zjleblanc/zjleblanc.kasa
+issues: https://github.com/zjleblanc/zjleblanc.kasa/issues
 
 dependencies: {}
-build_ignore: []
+build_ignore:
+  - .venv
+  - .gitignore
 

@@ -49,8 +49,6 @@ options:
         description: The smart device mac address.
         required: false
         type: str
-extends_documentation_fragment:
-    - zleblanc.kasa.smart_dimmer
 
 author:
     - Zach LeBlanc (@zjleblanc)
@@ -58,23 +56,23 @@ author:
 
 EXAMPLES = r'''
 - name: Get smart dimmer info
-  zleblanc.kasa.smart_dimmer:
+  zjleblanc.kasa.smart_dimmer:
     target: 192.168.0.100
 
 - name: Set smart dimmer alias
-  zleblanc.kasa.smart_dimmer:
+  zjleblanc.kasa.smart_dimmer:
     target: 192.168.0.100
     alias: "Backyard Lights"
 
 - name: Turn smart dimmer on
-  zleblanc.kasa.smart_dimmer:
+  zjleblanc.kasa.smart_dimmer:
     target: 192.168.0.100
     state: on
     brightness: 50
     transition: 100
 
 - name: Turn smart dimmer off
-  zleblanc.kasa.smart_dimmer:
+  zjleblanc.kasa.smart_dimmer:
     target: 192.168.0.100
     state: off
     transition: 100
@@ -88,7 +86,7 @@ smart_dimmer:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.zleblanc.kasa.plugins.module_utils.common import get_dimmer_info
+from ansible_collections.zjleblanc.kasa.plugins.module_utils.common import get_dimmer_info
 
 async def run_module():
     # define available arguments/parameters a user can pass to the module

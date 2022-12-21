@@ -41,8 +41,6 @@ options:
         description: The smart device mac address.
         required: false
         type: str
-extends_documentation_fragment:
-    - zleblanc.kasa.smart_device
 
 author:
     - Zach LeBlanc (@zjleblanc)
@@ -50,16 +48,16 @@ author:
 
 EXAMPLES = r'''
 - name: Get smart device info
-  zleblanc.kasa.smart_device:
+  zjleblanc.kasa.smart_device:
     target: 192.168.0.100
 
 - name: Set smart device alias
-  zleblanc.kasa.smart_device:
+  zjleblanc.kasa.smart_device:
     target: 192.168.0.100
     alias: "Backyard Lights"
 
 - name: Turn smart device on
-  zleblanc.kasa.smart_device:
+  zjleblanc.kasa.smart_device:
     target: 192.168.0.100
     state: on
 '''
@@ -72,7 +70,7 @@ smart_device:
 '''
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.zleblanc.kasa.plugins.module_utils.common import get_device_info
+from ansible_collections.zjleblanc.kasa.plugins.module_utils.common import get_device_info
 
 async def run_module():
     # define available arguments/parameters a user can pass to the module
