@@ -30,8 +30,8 @@ options:
         required: false
         type: str
         choices:
-            - on
-            - off
+            - enabled
+            - disabled
             - updated
     alias:
         description: The smart device alias (as shown in Kasa app).
@@ -59,7 +59,7 @@ EXAMPLES = r'''
 - name: Turn smart device on
   zjleblanc.kasa.smart_device:
     target: 192.168.0.100
-    state: on
+    state: enabled
 '''
 
 RETURN = r'''
@@ -109,9 +109,9 @@ async def run_module():
 
     desired_state = module.params['state']
     if module.params['state']:
-        if desired_state == 'on':
+        if desired_state == 'enabled':
             await smart_device.turn_on()
-        elif desired_state == 'off':
+        elif desired_state == 'disabled':
             await smart_device.turn_off()
     
     await smart_device.update()

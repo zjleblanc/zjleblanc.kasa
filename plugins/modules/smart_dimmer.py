@@ -30,8 +30,8 @@ options:
         required: false
         type: str
         choices:
-            - on
-            - off
+            - enabled
+            - disabled
             - updated
     brightness:
         description: The desired brightness of the smart device
@@ -67,14 +67,14 @@ EXAMPLES = r'''
 - name: Turn smart dimmer on
   zjleblanc.kasa.smart_dimmer:
     target: 192.168.0.100
-    state: on
+    state: enabled
     brightness: 50
     transition: 100
 
 - name: Turn smart dimmer off
   zjleblanc.kasa.smart_dimmer:
     target: 192.168.0.100
-    state: off
+    state: disabled
     transition: 100
 '''
 
@@ -133,9 +133,9 @@ async def run_module():
 
     desired_state = module.params['state']
     if module.params['state']:
-        if desired_state == 'on':
+        if desired_state == 'enabled':
             await smart_dimmer.turn_on(transition=module.params['transition'])
-        elif desired_state == 'off':
+        elif desired_state == 'disabled':
             await smart_dimmer.turn_off(transition=module.params['transition'])
     
     await smart_dimmer.update()
