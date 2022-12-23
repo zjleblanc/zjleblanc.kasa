@@ -10,7 +10,7 @@ from kasa import Discover
 
 DOCUMENTATION = r'''
 ---
-module: smart_device
+module: discover
 
 short_description: Discover kasa smart devices
 

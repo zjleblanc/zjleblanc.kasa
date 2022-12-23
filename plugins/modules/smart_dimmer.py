@@ -6,7 +6,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import asyncio
-from kasa import Discover, DeviceType
+from kasa import Discover, DeviceType, SmartDeviceException
 
 DOCUMENTATION = r'''
 ---
@@ -24,7 +24,9 @@ options:
     target:
         description: The target ip address for the smart device
         required: true
-        type: str
+        type: list
+        elements: str
+        default: []
     state:
         description: The desired state of the smart device
         required: false
@@ -71,15 +73,18 @@ EXAMPLES = r'''
     brightness: 50
     transition: 100
 
-- name: Turn smart dimmer off
+- name: Turn smart dimmers off
   zjleblanc.kasa.smart_dimmer:
-    target: 192.168.0.100
+    target: 
+        - 192.168.0.100
+        - 192.168.0.101
+        - 192.168.0.102
     state: disabled
     transition: 100
 '''
 
 RETURN = r'''
-smart_dimmer:
+smart_dimmers:
     description: The target smart dimmer info
     type: list
     returned: always
@@ -108,40 +113,60 @@ async def run_module():
         supports_check_mode=True
     )
 
-    brightness = module.params['brightness']
-    if brightness and (brightness < 0 or brightness > 100):
-        module.fail_json('Invalid brightness: must be [0-100]', **result)
     if module.check_mode:
         module.exit_json(**result)
 
-    smart_dimmer = await Discover.discover_single(module.params['target'])
-    await smart_dimmer.update()
+    alias = module.params['alias']
+    state = module.params['state']
+    mac = module.params['mac'] 
+    targets = module.params['target']
+    brightness = module.params['brightness']
+    transition = module.params['transition']
 
-    if smart_dimmer.device_type != DeviceType.Dimmer:
-        module.fail_json('Smart dimmer not found at target %s' % module.params['target'], **result)
+    if not len(targets):
+        module.fail_json('Must specify at least one target', **result)
+    if brightness and (brightness < 0 or brightness > 100):
+        module.fail_json('Invalid brightness: must be [0-100]', **result)
+    if len(targets) > 1 and (alias or mac):
+        module.fail_json('Cannot set alias/mac for more than one device', **result)
 
-    original_state = get_dimmer_info(smart_dimmer)
+    not_found = []
+    smart_dimmers = {}
+    for target in targets:
+        try:
+            dimmer = await Discover.discover_single(target)
+            smart_dimmers[target] = dimmer
+            if dimmer.device_type != DeviceType.Dimmer:
+                raise SmartDeviceException()
+        except SmartDeviceException:
+            not_found.append(target)
 
-    if module.params['alias']:
-        await smart_dimmer.set_alias(module.params['alias'])
+    if len(not_found):
+        result['not_found'] = not_found
+        module.fail_json('Failed to find at least one target dimmer', **result)
 
-    if module.params['mac']:
-        await smart_dimmer.set_mac(module.params['mac'])
+    for smart_dimmer in smart_dimmers:
+        await smart_dimmer.update()
+        original_state = get_dimmer_info(smart_dimmer)
 
-    if module.params['brightness']:
-        await smart_dimmer.set_brightness(module.params['brightness'])
+        if alias:
+            await smart_dimmer.set_alias(alias)
+        if mac:
+            await smart_dimmer.set_mac(mac)
+        if brightness:
+            await smart_dimmer.set_brightness(brightness)
+        if state:
+            if state == 'enabled':
+                await smart_dimmer.turn_on(transition=transition)
+            elif state == 'disabled':
+                await smart_dimmer.turn_off(transition=transition)
+        
+        await smart_dimmer.update()
+        current_state = get_dimmer_info(smart_dimmer)
+        result['smart_dimmers'][smart_dimmer.host] = current_state
+        result['changed'] = result['changed'] or (original_state != current_state)
+        result['smart_dimmers'][smart_dimmer.host]['on_since'] = smart_dimmer.on_since
 
-    desired_state = module.params['state']
-    if module.params['state']:
-        if desired_state == 'enabled':
-            await smart_dimmer.turn_on(transition=module.params['transition'])
-        elif desired_state == 'disabled':
-            await smart_dimmer.turn_off(transition=module.params['transition'])
-    
-    await smart_dimmer.update()
-    result['smart_dimmer'] = get_dimmer_info(smart_dimmer)
-    result['changed'] = original_state != result['smart_dimmer']
-    result['smart_dimmer']['on_since'] = smart_dimmer.on_since
     module.exit_json(**result)
 
 

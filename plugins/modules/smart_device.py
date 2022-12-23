@@ -6,7 +6,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import asyncio
-from kasa import Discover, DeviceType
+from kasa import Discover, SmartDeviceException
 
 DOCUMENTATION = r'''
 ---
@@ -24,7 +24,9 @@ options:
     target:
         description: The target ip address for the smart device
         required: true
-        type: str
+        type: list
+        elements: str
+        default: []
     state:
         description: The desired state of the smart device
         required: false
@@ -51,6 +53,13 @@ EXAMPLES = r'''
   zjleblanc.kasa.smart_device:
     target: 192.168.0.100
 
+- name: Get smart devices info
+  zjleblanc.kasa.smart_device:
+    target: 
+        - 192.168.0.100
+        - 192.168.0.101
+        - 192.168.0.102
+
 - name: Set smart device alias
   zjleblanc.kasa.smart_device:
     target: 192.168.0.100
@@ -60,10 +69,18 @@ EXAMPLES = r'''
   zjleblanc.kasa.smart_device:
     target: 192.168.0.100
     state: enabled
+
+- name: Turn smart devices off
+  zjleblanc.kasa.smart_device:
+    target: 
+        - 192.168.0.100
+        - 192.168.0.101
+        - 192.168.0.102
+    state: disabled
 '''
 
 RETURN = r'''
-smart_device:
+smart_devices:
     description: The target smart device info
     type: list
     returned: always
@@ -75,7 +92,7 @@ from ansible_collections.zjleblanc.kasa.plugins.module_utils.common import get_d
 async def run_module():
     # define available arguments/parameters a user can pass to the module
     module_args = dict(
-        target=dict(type='str', required=True),
+        target=dict(type='list', required=True),
         state=dict(type='str', required=False, default=None),
         alias=dict(type='str', required=False, default=None),
         mac=dict(type='str', required=False, default=None)
@@ -93,31 +110,52 @@ async def run_module():
     if module.check_mode:
         module.exit_json(**result)
 
-    smart_device = await Discover.discover_single(module.params['target'])
-    await smart_device.update()
+    alias = module.params['alias']
+    state = module.params['state']
+    mac = module.params['mac'] 
+    targets = module.params['target']
 
-    if smart_device.device_type == DeviceType.Unknown:
-        module.fail_json('Smart device not found at target %s' % module.params['target'], **result)
+    if not len(targets):
+        module.fail_json('Must specify at least one target', **result)
 
-    original_state = get_device_info(smart_device)
+    if len(targets) > 1 and (alias or mac):
+        module.fail_json('Cannot set alias/mac for more than one device', **result)
 
-    if module.params['alias']:
-        await smart_device.set_alias(module.params['alias'])
+    not_found = []
+    smart_devices = {}
+    for target in targets:
+        try:
+            dev = await Discover.discover_single(target)
+            smart_devices[target] = dev
+        except SmartDeviceException:
+            not_found.append(target)
 
-    if module.params['mac']:
-        await smart_device.set_mac(module.params['mac'])
+    if len(not_found):
+        result['not_found'] = not_found
+        module.fail_json('Failed to find at least one target', **result)
 
-    desired_state = module.params['state']
-    if module.params['state']:
-        if desired_state == 'enabled':
-            await smart_device.turn_on()
-        elif desired_state == 'disabled':
-            await smart_device.turn_off()
-    
-    await smart_device.update()
-    result['smart_device'] = get_device_info(smart_device)
-    result['changed'] = original_state != result['smart_device']
-    result['smart_device']['on_since'] = smart_device.on_since
+    for smart_device in smart_devices:
+        await smart_device.update()
+        original_state = get_device_info(smart_device)
+
+        if alias:
+            await smart_device.set_alias(alias)
+        if mac:
+            await smart_device.set_mac(mac)
+
+        if state:
+            if state == 'enabled':
+                await smart_device.turn_on()
+            elif state == 'disabled':
+                await smart_device.turn_off()
+        
+        await smart_device.update()
+        current_state = get_device_info(smart_device)
+        result['smart_devices'][smart_device.host] = current_state
+        result['changed'] = result['changed'] or (original_state != current_state)
+        # Do not evaluate on_since as part of changed
+        result['smart_devices'][smart_device.host]['on_since'] = smart_device.on_since
+
     module.exit_json(**result)
 
 

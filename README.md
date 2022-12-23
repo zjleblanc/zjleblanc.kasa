@@ -61,14 +61,22 @@ Examples:
       zjleblanc.kasa.smart_device:
         target: 192.168.0.100
         state: enabled
+
+    - name: Turn off known smart devices
+      zjleblanc.kasa.smart_device:
+        target: 
+            - 192.168.0.100
+            - 192.168.0.101
+            - 192.168.0.102
+        state: enabled
 ```
 
 Output:
 ```json
 {
     "changed": true,
-    "smart_device": [
-        {
+    "smart_devices": {
+        "192.168.0.100": {
             "alias": "Kitchen Lights",
             "host": "192.168.0.100",
             "hw_info": {
@@ -83,8 +91,9 @@ Output:
             "model": "HS200(US)",
             "on": true,
             "type": "DeviceType.Plug"
-        }
-    ]
+        },
+        ...
+    }
 }
 ```
 
@@ -107,29 +116,42 @@ Examples:
       zjleblanc.kasa.smart_dimmer:
         target: 192.168.0.100
         state: enabled
+
+    - name: Turn off known smart dimmers
+      zjleblanc.kasa.smart_dimmer:
+        target: 
+            - 192.168.0.100
+            - 192.168.0.101
+            - 192.168.0.102
+        brightness: 50
+        transition: 100
+        state: enabled
 ```
 
 Output:
 ```json
 {
     "changed": false,
-    "smart_dimmer": {
-        "alias": "Outdoor Dimming Lights",
-        "brightness": 75,
-        "host": "192.168.0.100",
-        "hw_info": {
-            "dev_name": "Wi-Fi Smart Dimmer",
-            "hwId": "50B3F5C5DF12106A8C85E8903749DF1B",
-            "hw_ver": "3.0",
-            "mac": "6C:5A:B0:EE:8F:07",
-            "mic_type": "IOT.SMARTPLUGSWITCH",
-            "oemId": "774577CB2E1782A8BA53CDBBA136FAE6",
-            "sw_ver": "1.0.3 Build 210202 Rel.190636"
+    "smart_dimmers": {
+        "192.168.0.100": {
+            "alias": "Outdoor Dimming Lights",
+            "brightness": 75,
+            "host": "192.168.0.100",
+            "hw_info": {
+                "dev_name": "Wi-Fi Smart Dimmer",
+                "hwId": "50B3F5C5DF12106A8C85E8903749DF1B",
+                "hw_ver": "3.0",
+                "mac": "6C:5A:B0:EE:8F:07",
+                "mic_type": "IOT.SMARTPLUGSWITCH",
+                "oemId": "774577CB2E1782A8BA53CDBBA136FAE6",
+                "sw_ver": "1.0.3 Build 210202 Rel.190636"
+            },
+            "model": "HS220(US)",
+            "on": false,
+            "on_since": null,
+            "type": "DeviceType.Dimmer"
         },
-        "model": "HS220(US)",
-        "on": false,
-        "on_since": null,
-        "type": "DeviceType.Dimmer"
+        ...
     }
 }
 ```
