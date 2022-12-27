@@ -134,7 +134,8 @@ async def run_module():
         result['not_found'] = not_found
         module.fail_json('Failed to find at least one target', **result)
 
-    for smart_device in smart_devices:
+    for target in smart_devices:
+        smart_device = smart_devices[target]
         await smart_device.update()
         original_state = get_device_info(smart_device)
 
