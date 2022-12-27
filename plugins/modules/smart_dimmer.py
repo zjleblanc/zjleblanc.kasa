@@ -145,6 +145,7 @@ async def run_module():
         result['not_found'] = not_found
         module.fail_json('Failed to find at least one target dimmer', **result)
 
+    result['smart_dimmers'] = {}
     for target in smart_dimmers:
         smart_dimmer = smart_dimmers[target]
         await smart_dimmer.update()
